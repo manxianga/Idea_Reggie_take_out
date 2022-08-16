@@ -79,23 +79,23 @@ public class EmployeeControler {
 
         //设置初始密码123456,需要进行MD5加密
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
-        //创建时间
-        employee.setCreateTime(LocalDateTime.now());
-        //修改时间
-        employee.setUpdateTime(LocalDateTime.now());
+//        //创建时间
+//        employee.setCreateTime(LocalDateTime.now());
+//        //修改时间
+//        employee.setUpdateTime(LocalDateTime.now());
 
         //获得当前用户的ID
         Long empId = (Long)request.getSession().getAttribute("employee");
 
-        employee.setCreateUser(empId);
-        employee.setUpdateUser(empId);
+//        employee.setCreateUser(empId);
+//        employee.setUpdateUser(empId);
 
         employeeService.save(employee);
         return R.success("新增员工成功");
     }
 
     /**
-     * 员工信息分页查询
+     * 员工信息分页查询，参数形式/page?page=1&pageSize=1&name="nihao"
      * @param page
      * @param pageSize
      * @param name
