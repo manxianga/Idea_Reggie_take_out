@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.dto.SetmealDto;
+import com.itheima.reggie.entity.AddressBook;
 import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.entity.Setmeal;
 import com.itheima.reggie.entity.SetmealDish;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 @RestController
@@ -83,6 +85,7 @@ public class SetmealController {
      */
     @DeleteMapping
     public R<String> delete(@RequestParam List<Long> ids){
+
         setmealService.removeWithDish(ids);
         return R.success("套餐数据删除成功");
     }

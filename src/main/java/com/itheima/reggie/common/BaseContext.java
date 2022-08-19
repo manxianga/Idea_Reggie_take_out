@@ -11,6 +11,6 @@ public class BaseContext {
     }
 
     public static Long getCurrentId(){
-        return threadLocal.get();
+        return threadLocal.get();//已从LoginCheckFilter类中提前保存
     }
 }
