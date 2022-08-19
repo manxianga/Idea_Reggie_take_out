@@ -130,4 +130,29 @@ public class SetmealController {
         setmealDishService.saveBatch(list);
         return R.success("修改成功");
     }
+
+    /**
+     * 拉去菜品列表
+     * @param setmeal
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<SetmealDto>> list(Setmeal setmeal){
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Setmeal::getCategoryId,setmeal.getCategoryId());
+        queryWrapper.eq(Setmeal::getStatus,setmeal.getStatus());
+
+        final List<Setmeal> setmealList = setmealService.list(queryWrapper);
+        final List<SetmealDto> setmealDtoList = setmealList.stream().map((item) -> {
+            final SetmealDto dto = new SetmealDto();
+            BeanUtils.copyProperties(item, dto);
+            LambdaQueryWrapper<SetmealDish> dishQueryWrapper = new LambdaQueryWrapper<>();
+            dishQueryWrapper.eq(SetmealDish::getSetmealId, item.getId());
+            dishQueryWrapper.orderByDesc(SetmealDish::getUpdateTime);
+            final List<SetmealDish> dishList = setmealDishService.list(dishQueryWrapper);
+            dto.setSetmealDishes(dishList);
+            return dto;
+        }).collect(Collectors.toList());
+        return R.success(setmealDtoList);
+    }
 }
