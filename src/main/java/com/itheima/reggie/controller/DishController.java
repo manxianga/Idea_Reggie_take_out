@@ -10,12 +10,15 @@ import com.itheima.reggie.entity.Dish;
 import com.itheima.reggie.service.CategoryService;
 import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
+import com.sun.org.apache.xerces.internal.xs.StringList;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static jdk.nashorn.internal.runtime.regexp.joni.Config.log;
 
 /**
  * 菜品管理
@@ -107,4 +110,50 @@ public class DishController {
         dishService.updateWithFlavor(dishDto);
         return R.success("新增菜品成功");
     }
+
+    /**
+     * 更新菜品状态信息，停售，起售
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public R<String> status(@PathVariable int status, Long[] ids){
+        for (long id : ids) {
+            dishService.status(status,id);
+        }
+        return R.success("修改成功");
+    }
+
+    /**
+     * 删除
+     * @param ids
+     * @return
+     */
+    @DeleteMapping
+    public R<String> delete(Long[] ids){
+        for (Long id : ids) {
+            dishService.delete(id);
+        }
+        return R.success("删除成功");
+    }
+
+    /**
+     * 根据条件查询对应的菜品数据
+     * @param dish
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<Dish>> list(Dish dish){
+        //构造查询条件
+        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(dish.getCategoryId() != null,Dish::getCategoryId,dish.getCategoryId());
+        queryWrapper.eq(Dish::getStatus,1);//判断菜品是否是起售状态
+        //添加排序条件
+        queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
+
+
+        final List<Dish> list = dishService.list(queryWrapper);
+
+        return R.success(list);
+    }
+
 }

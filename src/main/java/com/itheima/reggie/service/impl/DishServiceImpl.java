@@ -93,4 +93,25 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         //保存菜品口味数据到菜品口味表dish_flavor
         dishFlavorService.saveBatch(flavors);//批量保存
     }
+
+    /**
+     * 删除菜品
+     * @param id
+     */
+    @Override
+    public void delete(Long id) {
+        this.removeById(id);
+    }
+
+    /**
+     * 设置菜品状态
+     * @param status
+     * @param id
+     */
+    @Override
+    public void status(int status, Long id) {
+        final Dish dish = this.getById(id);
+        dish.setStatus(status);
+        this.updateById(dish);
+    }
 }
