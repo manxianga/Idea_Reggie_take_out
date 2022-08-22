@@ -141,6 +141,7 @@ public class SetmealController {
         LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Setmeal::getCategoryId,setmeal.getCategoryId());
         queryWrapper.eq(Setmeal::getStatus,setmeal.getStatus());
+        queryWrapper.orderByDesc(Setmeal::getUpdateTime);
 
         final List<Setmeal> setmealList = setmealService.list(queryWrapper);
         final List<SetmealDto> setmealDtoList = setmealList.stream().map((item) -> {
