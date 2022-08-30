@@ -82,6 +82,10 @@ public class ShoppingCartController {
         return R.success("修改成功");
     }
 
+    /**
+     * 查看购物车
+     * @return
+     */
     @GetMapping("/list")
     public R<List<ShoppingCart>> list(){
         final Long currentId = BaseContext.getCurrentId();
