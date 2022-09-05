@@ -11,15 +11,12 @@ import com.itheima.reggie.entity.DishFlavor;
 import com.itheima.reggie.service.CategoryService;
 import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
-import com.sun.org.apache.xerces.internal.xs.StringList;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static jdk.nashorn.internal.runtime.regexp.joni.Config.log;
 
 /**
  * 菜品管理
