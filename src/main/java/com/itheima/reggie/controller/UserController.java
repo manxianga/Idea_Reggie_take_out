@@ -2,18 +2,23 @@ package com.itheima.reggie.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.itheima.reggie.common.R;
+import com.itheima.reggie.common.TimeAndVerCode;
+import com.itheima.reggie.component.SendEmail;
 import com.itheima.reggie.entity.User;
 import com.itheima.reggie.service.UserService;
 import com.itheima.reggie.utils.SMSUtils;
 import com.itheima.reggie.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.Date;
 import java.util.Map;
 
 
@@ -24,6 +29,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private SendEmail sendEmail;
 
     /**
      * 发送手机短信验证码
@@ -32,22 +39,38 @@ public class UserController {
      */
     @PostMapping("/sendMsg")
     public R<String> sendMsg(@RequestBody User user,HttpSession session){
-        //获取手机号
-        String phone = user.getPhone();
-        if(phone != null){
+//        发送邮箱验证
+        val emal = user.getPhone();
+        if(emal != null){
             //生成随机的短信验证码
             final String code = ValidateCodeUtils.generateValidateCode(4).toString();
-            //调用阿里云提供的短信服务API完成发送短信
-            SMSUtils.sendMessage("阿里云短信测试","SMS_154950909",phone,code);
-            //需要将生成的验证码保存到Session
-            session.setAttribute(phone,code);
+            sendEmail.sendEmail(emal,code);
+            session.setAttribute(emal,code);
             log.info("code: {}",code);
-            return R.success("手机验证码发送成功");
+
+            return R.success("发送成功");
         }
-        else{
-            return R.success("手机号为空");
+        else {
+            return R.error("邮箱为空");
         }
-    }
+
+//        发送短信验证
+        //获取手机号
+//        String phone = user.getPhone();
+//        if(phone != null){
+//            //生成随机的短信验证码
+//            final String code = ValidateCodeUtils.generateValidateCode(4).toString();
+//            //调用阿里云提供的短信服务API完成发送短信
+//            SMSUtils.sendMessage("阿里云短信测试","SMS_154950909",phone,code);
+//            //需要将生成的验证码保存到Session
+//            session.setAttribute(phone,code);
+//            log.info("code: {}",code);
+//            return R.success("手机验证码发送成功");
+//        }
+//        else{
+//            return R.success("手机号为空");
+//        }
+}
 
     /**
      * 移动端用户登陆
@@ -55,7 +78,7 @@ public class UserController {
      * @param session
      * @return
      */
-    @PostMapping("login")
+    @PostMapping("/login")
     public R<User> login(@RequestBody Map map,HttpSession session){
         //获取手机号
         final String phone = map.get("phone").toString();
@@ -80,5 +103,12 @@ public class UserController {
             return R.success(user);
         }
         return R.error("登陆失败");
+    }
+
+    @PostMapping("/loginout")
+    public R<String> loginout(HttpServletRequest request){
+        //清理Session中保存的当前员工的id
+        request.getSession().removeAttribute("user");
+        return R.success("退出成功");
     }
 }
