@@ -43,4 +43,4 @@ mybatis-plus:
 
 #定义文件上传保存的路径,reggie名字可以自己定义
 reggie:
-  path: /usr/local/resources/reggie_take_out
+  path: /usr/local/resources/reggie_take_out/
