@@ -28,7 +28,9 @@ spring:
           starttls:
             enable: true
             required: true
-
+          ssl:
+            enable: true
+            class: java.net.ssl.SSLSocketFactory
 
 mybatis-plus:
   configuration:
