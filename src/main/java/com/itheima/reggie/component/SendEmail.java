@@ -1,12 +1,8 @@
 package com.itheima.reggie.component;
-import com.itheima.reggie.common.TimeAndVerCode;
-import com.itheima.reggie.utils.ValidateCodeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
-
-import java.util.Date;
 
 @Component //将当前类放入组件中，从而能够实现自动注入
 public class SendEmail {

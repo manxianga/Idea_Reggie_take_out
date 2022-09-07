@@ -13,9 +13,11 @@ import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +33,8 @@ public class DishController {
 
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
 
     /**
@@ -40,6 +44,7 @@ public class DishController {
      */
     @PostMapping
     public R<String> save(@RequestBody DishDto dishDto){
+        dishService.deleteRedisCache(dishDto.getCategoryId());
         dishService.saveWithFlavor(dishDto);
         return R.success("新增菜品成功");
     }
@@ -106,7 +111,7 @@ public class DishController {
     @PutMapping
     public R<String> update(@RequestBody DishDto dishDto){
         dishService.updateWithFlavor(dishDto);
-        return R.success("新增菜品成功");
+        return R.success("更新成功");
     }
 
     /**
@@ -114,10 +119,8 @@ public class DishController {
      * @return
      */
     @PostMapping("/status/{status}")
-    public R<String> status(@PathVariable int status, Long[] ids){
-        for (long id : ids) {
-            dishService.status(status,id);
-        }
+    public R<String> status(@PathVariable int status,@RequestParam List<Long> ids){
+        dishService.status(status,ids);
         return R.success("修改成功");
     }
 
@@ -127,10 +130,8 @@ public class DishController {
      * @return
      */
     @DeleteMapping
-    public R<String> delete(Long[] ids){
-        for (Long id : ids) {
-            dishService.delete(id);
-        }
+    public R<String> delete(@RequestParam List<Long> ids){
+        dishService.delete(ids);
         return R.success("删除成功");
     }
 
@@ -141,6 +142,16 @@ public class DishController {
      */
     @GetMapping("/list")
     public R<List<DishDto>> list(Dish dish){
+        List<DishDto> dishDtoList = null;
+        //动态构造key
+        String key = "dish_"+dish.getCategoryId()+"_"+dish.getStatus();
+        //先从redis中获取缓存数据
+        dishDtoList = (List<DishDto>)redisTemplate.opsForValue().get(key);
+        if(dishDtoList != null){
+            //如果存在，则直接返回，无需查询数据库
+            return R.success(dishDtoList);
+        }
+
         //构造查询条件
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(dish.getCategoryId() != null,Dish::getCategoryId,dish.getCategoryId());
@@ -150,7 +161,7 @@ public class DishController {
 
         final List<Dish> list = dishService.list(queryWrapper);
 
-        final List<DishDto> dishDtoList = list.stream().map((item) -> {
+        dishDtoList = list.stream().map((item) -> {
             final DishDto dishDto = new DishDto();
             BeanUtils.copyProperties(item, dishDto);
 
@@ -167,6 +178,8 @@ public class DishController {
             dishDto.setFlavors(dishFlavorList);
             return dishDto;
         }).collect(Collectors.toList());
+        //如果不存在，需要查询数据库，将查询到的数据保存到redis中,缓存时间1个小时
+        redisTemplate.opsForValue().set(key,dishDtoList,1, TimeUnit.HOURS);
         return R.success(dishDtoList);
     }
 

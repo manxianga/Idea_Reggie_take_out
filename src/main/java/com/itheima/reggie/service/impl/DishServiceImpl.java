@@ -10,8 +10,10 @@ import com.itheima.reggie.mapper.DishMapper;
 import com.itheima.reggie.service.CategoryService;
 import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
+import lombok.var;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,8 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
     private DishFlavorService dishFlavorService;
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private RedisTemplate redisTemplate;
     /**
      * 新增菜品，同时保存对应的口味数据
      * @param dishDto
@@ -50,7 +54,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @param id
      * @return
      */
-    public DishDto getByIdWithFlavor(Long id) {
+    public DishDto getByIdWithFlavor(long id) {
         //查询菜品基本信息，从dish表中查询
         final Dish dish = this.getById(id);
         final DishDto dishDto = new DishDto();
@@ -73,10 +77,10 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * 刷新菜品及其口味
      * @param dishDto
      */
-    @Override
     @Transactional
     public void updateWithFlavor(DishDto dishDto) {
         //更新dish表基本信息
+        this.deleteRedisCache(dishDto.getCategoryId());
         this.updateById(dishDto);
         //清理当前菜品对应口味数据-dish_flavor表的deltet操作
         LambdaQueryWrapper<DishFlavor> queryWrapper = new LambdaQueryWrapper<>();
@@ -96,22 +100,59 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
     /**
      * 删除菜品
-     * @param id
+     * @param ids
      */
-    @Override
-    public void delete(Long id) {
-        this.removeById(id);
+    @Transactional
+    public void delete(List<Long> ids) {
+        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(Dish::getId,ids);
+        List<Dish> dishList = this.list(queryWrapper);
+        for(Dish dish:dishList){
+            this.deleteRedisCache(dish.getCategoryId());
+        }
+        for(long id:ids){
+            LambdaQueryWrapper<DishFlavor> dishFlavorLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            dishFlavorLambdaQueryWrapper.eq(DishFlavor::getDishId,id);
+            List<DishFlavor> dishFlavorList= dishFlavorService.list(dishFlavorLambdaQueryWrapper);
+            dishFlavorService.remove(dishFlavorLambdaQueryWrapper);
+        }
+        this.removeByIds(ids);
     }
 
     /**
      * 设置菜品状态
      * @param status
+     * @param ids
+     */
+    @Override
+    public void status(int status, List<Long> ids) {
+        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(Dish::getId,ids);
+        List<Dish> dishList = this.list(queryWrapper);
+        for(Dish dish:dishList){
+            this.deleteRedisCache(dish.getCategoryId());
+        }
+
+        for(long id:ids){
+            this.deleteRedisCache(id);
+            final Dish dish = this.getById(id);
+            dish.setStatus(status);
+            this.updateById(dish);
+        }
+    }
+
+    /**
+     * 清理分类菜品下的缓存数据
      * @param id
      */
     @Override
-    public void status(int status, Long id) {
-        final Dish dish = this.getById(id);
-        dish.setStatus(status);
-        this.updateById(dish);
+    public void deleteRedisCache(long id){
+        //清理所有菜品的缓存数据
+//        final Set keys = redisTemplate.keys("dish*");
+//        redisTemplate.delete(keys);
+
+        //清理某个分类下面菜品的缓存数据
+        String key = "dish_" + id + "_1";
+        redisTemplate.delete(key);
     }
 }
