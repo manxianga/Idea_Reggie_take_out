@@ -18,7 +18,9 @@ spring:
     port: 6379
     database: 0
   #    password: 123
-
+  cache:
+    redis:
+      time-to-live: 1800000 #设置缓存有效时间 毫秒
   #配置邮箱发送验证码
   mail:
     host: smtp.163.com
@@ -36,6 +38,7 @@ spring:
           ssl:
             enable: true
             class: java.net.ssl.SSLSocketFactory
+
 
 mybatis-plus:
   configuration:

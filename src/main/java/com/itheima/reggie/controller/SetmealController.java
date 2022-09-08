@@ -14,6 +14,8 @@ import com.itheima.reggie.service.SetmealService;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -38,6 +40,7 @@ public class SetmealController {
      * @param setmealDto
      */
     @PostMapping
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public R<String> save(@RequestBody SetmealDto setmealDto){
         setmealService.saveWithDish(setmealDto);
 
@@ -84,6 +87,7 @@ public class SetmealController {
      * @return
      */
     @DeleteMapping
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public R<String> delete(@RequestParam List<Long> ids){
 
         setmealService.removeWithDish(ids);
@@ -91,6 +95,7 @@ public class SetmealController {
     }
 
     @PostMapping("status/{status}")
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public R<String> status(@PathVariable int status,Long[] ids){
         for (Long id : ids) {
             final Setmeal setmeal = setmealService.getById(id);
@@ -115,6 +120,7 @@ public class SetmealController {
     }
 
     @PutMapping
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public R<String> update(@RequestBody SetmealDto setmealDto){
         LambdaQueryWrapper<SetmealDish> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SetmealDish::getSetmealId,setmealDto.getId());
@@ -137,6 +143,7 @@ public class SetmealController {
      * @return
      */
     @GetMapping("/list")
+    @Cacheable(value = "setmealCache",key = "#setmeal.categoryId + '_' + #setmeal.status")//将数据加入缓存
     public R<List<SetmealDto>> list(Setmeal setmeal){
         LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Setmeal::getCategoryId,setmeal.getCategoryId());
